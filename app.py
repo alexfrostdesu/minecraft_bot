@@ -12,10 +12,12 @@ MINECRAFT_API = "https://api.mcsrvstat.us/2/"
 class TelegramMessage:
     message: dict | None = field(default_factory=dict)
     edited_message: dict | None = field(default_factory=dict)
+    my_chat_member: dict | None = field(default_factory=dict)
     commands: set | None = field(default_factory=set)
     update_id: int | None = None
     text: str | None = None
     is_edited: bool | None = isinstance(edited_message, dict)
+    is_from_group: bool | None = isinstance(my_chat_member, dict)
 
     def get_command(self, start: int, end: int) -> str:
         return self.text[start:end]
@@ -42,11 +44,20 @@ class TelegramMessage:
 
     @property
     def from_id(self) -> int:
-        return self.message.get("from", {}).get("id") or self.edited_message.get("from", {}).get("id")
+        return (
+                self.message.get("from", {}).get("id") or
+                self.edited_message.get("from", {}).get("id") or
+                self.my_chat_member.get("from", {}).get("id")
+        )
 
     @property
     def chat_id(self) -> int:
-        return self.message.get("chat", {}).get("id") or self.edited_message.get("chat", {}).get("id")
+        return (
+                self.message.get("chat", {}).get("id") or
+                self.edited_message.get("chat", {}).get("id") or
+                self.my_chat_member.get("chat", {}).get("id")
+        )
+
 
     @property
     def message_id(self) -> int:
@@ -138,12 +149,11 @@ class BotHandler:
         for comm in message.commands:
             if comm in self.available_commands:
                 text = self.available_commands[comm]()
-                self.send_message(text, message.chat_id, message.from_id, silent=False)
+                self.send_message(text, message.chat_id, message.from_id, silent=message.is_from_group)
 
     def run(self):
         while True:
             messages_response = self.get_messages()
-            print(messages_response)
             if messages_response.status_code == 200:
                 telegram_messages = self.unpack_messages(messages_response.json())
                 for message in telegram_messages:
