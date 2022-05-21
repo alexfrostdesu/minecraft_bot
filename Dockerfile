@@ -9,4 +9,4 @@ WORKDIR app/
 
 RUN pip install pipenv && pipenv install --deploy --system
 
-CMD ["python", "-u ./app.py"]
+CMD ["python", "-u", "./app.py"]
