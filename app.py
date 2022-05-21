@@ -153,6 +153,7 @@ class BotHandler:
     def run(self):
         while True:
             messages_response = self.get_messages()
+            # testing prints
             print(messages_response, flush=True)
             if messages_response.status_code == 200:
                 print(messages_response.json(), flush=True)
