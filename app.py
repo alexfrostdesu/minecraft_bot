@@ -77,7 +77,6 @@ class BotHandler:
     def check_status(self) -> str:
         res = requests.get(self.minecraft_url)
         server_data = res.json()
-        print(server_data)
         online = "✅" if server_data["online"] else "❌"
         text = f"""
         Server {server_data["motd"]["clean"]} @ {server_data["ip"]}:
@@ -120,7 +119,7 @@ class BotHandler:
         if message.status_code == 200:
             self.update_last_message(chat_id, message.json())
 
-    def edit_message(self, text, message_id, chat_id):
+    def edit_message(self, text: str, message_id: int, chat_id: int):
         message = requests.post(
             self.telegram_url + "editMessageText",
             {"text": text,
@@ -133,7 +132,7 @@ class BotHandler:
         if message.status_code == 200:
             self.update_last_message(chat_id, message.json())
 
-    def delete_message(self, message_id, chat_id):
+    def delete_message(self, message_id: int, chat_id: int):
         message = requests.post(
             self.telegram_url + "deleteMessage",
             {"message_id": message_id,
@@ -145,7 +144,7 @@ class BotHandler:
         if message.status_code == 200:
             self.last_message.pop(chat_id)
 
-    def handle_commands(self, message):
+    def handle_commands(self, message: TelegramMessage):
         for comm in message.commands:
             if comm in self.available_commands:
                 text = self.available_commands[comm]()
@@ -154,7 +153,9 @@ class BotHandler:
     def run(self):
         while True:
             messages_response = self.get_messages()
+            print(messages_response, flush=True)
             if messages_response.status_code == 200:
+                print(messages_response.json(), flush=True)
                 telegram_messages = self.unpack_messages(messages_response.json())
                 for message in telegram_messages:
                     self.handle_commands(message)
